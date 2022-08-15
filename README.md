@@ -6,7 +6,7 @@
 
 ## Technologies
 
-* nest.js
+* nestJS
 * postgreSQL - v. 14.3
 * TypeORM
 * Docker
