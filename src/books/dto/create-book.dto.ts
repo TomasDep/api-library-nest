@@ -6,6 +6,7 @@ import {
   IsPositive,
   IsInt,
   IsBoolean,
+  IsArray,
 } from 'class-validator';
 
 export class CreateBookDto {
@@ -32,4 +33,7 @@ export class CreateBookDto {
   @IsString()
   @IsOptional()
   slug?: string;
+  @IsString({ each: true })
+  @IsArray()
+  genres: string[];
 }
