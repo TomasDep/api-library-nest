@@ -4,9 +4,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
+import { Genre } from './genre.entity';
 
 @Entity('books')
 export class Book {
@@ -26,6 +29,8 @@ export class Book {
   price: number;
   @Column('text', { unique: true })
   slug: string;
+  @OneToMany(() => Genre, (genre) => genre.book, { cascade: true, eager: true })
+  genres: Genre[];
   @CreateDateColumn({
     type: 'timestamp',
     name: 'created_at',
