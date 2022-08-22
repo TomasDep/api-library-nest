@@ -8,37 +8,56 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { isUUID } from 'class-validator';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { PaginatioDto } from 'src/common/dtos/pagination.dto';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { Book } from './entities/book.entity';
+import { Genre } from './entities/genre.entity';
 
 @Injectable()
 export class BooksService {
   private readonly logger = new Logger('BoobsService');
 
   constructor(
-    @InjectRepository(Book) private readonly bookRepository: Repository<Book>,
+    @InjectRepository(Book)
+    private readonly bookRepository: Repository<Book>,
+    @InjectRepository(Genre)
+    private readonly genreRepository: Repository<Genre>,
+    private readonly dataSource: DataSource,
   ) {}
 
-  public async create(createBookDto: CreateBookDto): Promise<Book> {
+  public async create(createBookDto: CreateBookDto) {
     try {
-      const book = this.bookRepository.create(createBookDto);
+      const { genres = [], ...bookDetails } = createBookDto;
+      const book = this.bookRepository.create({
+        genres: genres.map((name: string) =>
+          this.genreRepository.create({ name }),
+        ),
+        ...bookDetails,
+      });
       await this.bookRepository.save(book);
-      return book;
+      return { ...book, genres };
     } catch (error) {
       this.handleExceptions(error);
     }
   }
 
-  public findAll(paginationDto: PaginatioDto): Promise<Book[]> {
+  public async findAll(paginationDto: PaginatioDto) {
     const { limit = 10, offset = 0 } = paginationDto;
-    return this.bookRepository.find({
+    const books = await this.bookRepository.find({
       take: limit,
       skip: offset,
+      relations: {
+        genres: true,
+      },
     });
+
+    return books.map((book: Book) => ({
+      ...book,
+      genres: book.genres.map((genre: Genre) => genre.name),
+    }));
   }
 
   public async findOne(term: string): Promise<Book> {
@@ -47,12 +66,13 @@ export class BooksService {
     if (isUUID(term)) {
       book = await this.bookRepository.findOneBy({ id: term });
     } else {
-      const query = this.bookRepository.createQueryBuilder();
+      const query = this.bookRepository.createQueryBuilder('book');
       book = await query
-        .where('UPPER(name) =:name or slug =:slug', {
+        .where('UPPER(book.name) =:name or slug =:slug', {
           name: term.toUpperCase(),
           slug: term.toLowerCase(),
         })
+        .leftJoinAndSelect('book.genres', 'genres')
         .getOne();
     }
 
@@ -63,20 +83,38 @@ export class BooksService {
     return book;
   }
 
-  public async update(id: string, updateBookDto: UpdateBookDto): Promise<Book> {
-    const book = await this.bookRepository.preload({
-      id,
-      ...updateBookDto,
-    });
+  public async findOneBook(value: string) {
+    const { genres = [], ...rest } = await this.findOne(value);
+    return { ...rest, genres: genres.map((genre: Genre) => genre.name) };
+  }
+
+  public async update(id: string, updateBookDto: UpdateBookDto) {
+    const { genres, ...bookUpdate } = updateBookDto;
+    const book = await this.bookRepository.preload({ id, ...bookUpdate });
 
     if (!book) {
       throw new NotFoundException(`Book with id: ${id} not found`);
     }
 
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      await this.bookRepository.save(book);
-      return book;
+      if (genres) {
+        await queryRunner.manager.delete(Genre, { book: { id } });
+        book.genres = genres.map((name) =>
+          this.genreRepository.create({ name }),
+        );
+      }
+
+      await queryRunner.manager.save(book);
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+      return this.findOneBook(id);
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
       this.handleExceptions(error);
     }
   }
@@ -84,6 +122,15 @@ export class BooksService {
   public async remove(id: string): Promise<void> {
     const book = await this.findOne(id);
     await this.bookRepository.remove(book);
+  }
+
+  private async deleteAllBooksData() {
+    const query = this.bookRepository.createQueryBuilder('book');
+    try {
+      return query.delete().where({}).execute();
+    } catch (error) {
+      this.handleExceptions(error);
+    }
   }
 
   private handleExceptions(error: any): void {
