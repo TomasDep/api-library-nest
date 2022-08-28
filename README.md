@@ -17,7 +17,7 @@
 docker-compose up
 ```
 
-## Insert Data endpoint
+## Insert Data Endpoint
 
 ```
 /api/v1/seed
