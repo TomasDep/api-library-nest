@@ -6,13 +6,19 @@
 
 ## Technologies
 
-* nestJS
-* postgreSQL - v. 14.3
-* TypeORM
-* Docker
+- nestJS
+- postgreSQL - v. 14.3
+- TypeORM
+- Docker
 
 ## Run Database
 
 ```
 docker-compose up
+```
+
+## Insert Data endpoint
+
+```
+/api/v1/seed
 ```
