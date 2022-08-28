@@ -124,7 +124,7 @@ export class BooksService {
     await this.bookRepository.remove(book);
   }
 
-  private async deleteAllBooksData() {
+  public async deleteAllBooksData() {
     const query = this.bookRepository.createQueryBuilder('book');
     try {
       return query.delete().where({}).execute();
