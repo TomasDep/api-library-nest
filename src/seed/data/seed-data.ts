@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 interface SeedBook {
   name: string;
   description: string;
@@ -9,11 +10,50 @@ interface SeedBook {
   genres: string[];
 }
 
+interface SeedUser {
+  email: string;
+  username: string;
+  password: string;
+  fullname: string;
+  roles: string[];
+}
+
 interface SeedData {
+  users: SeedUser[];
   products: SeedBook[];
 }
 
 export const initialData: SeedData = {
+  users: [
+    {
+      email: 'admin@admin.com',
+      username: 'Admin',
+      password: bcrypt.hashSync('123456aA', 10),
+      fullname: 'Admin',
+      roles: ['admin', 'user'],
+    },
+    {
+      email: 'user@user.com',
+      username: 'UserOne',
+      password: bcrypt.hashSync('123456aA', 10),
+      fullname: 'User One',
+      roles: ['user'],
+    },
+    {
+      email: 'userTwo@user.com',
+      username: 'UserTwo',
+      password: bcrypt.hashSync('123456aA', 10),
+      fullname: 'User Two',
+      roles: ['user'],
+    },
+    {
+      email: 'userThree@user.com',
+      username: 'UserThree',
+      password: bcrypt.hashSync('123456aA', 10),
+      fullname: 'User Three',
+      roles: ['user'],
+    },
+  ],
   products: [
     {
       name: 'Lord of the Rings the Fellowship of the Ring',
