@@ -15,6 +15,7 @@ import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { Book } from './entities/book.entity';
 import { Genre } from './entities/genre.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class BooksService {
@@ -28,13 +29,14 @@ export class BooksService {
     private readonly dataSource: DataSource,
   ) {}
 
-  public async create(createBookDto: CreateBookDto) {
+  public async create(createBookDto: CreateBookDto, user: User) {
     try {
       const { genres = [], ...bookDetails } = createBookDto;
       const book = this.bookRepository.create({
         genres: genres.map((name: string) =>
           this.genreRepository.create({ name }),
         ),
+        user,
         ...bookDetails,
       });
       await this.bookRepository.save(book);
@@ -88,7 +90,7 @@ export class BooksService {
     return { ...rest, genres: genres.map((genre: Genre) => genre.name) };
   }
 
-  public async update(id: string, updateBookDto: UpdateBookDto) {
+  public async update(id: string, updateBookDto: UpdateBookDto, user: User) {
     const { genres, ...bookUpdate } = updateBookDto;
     const book = await this.bookRepository.preload({ id, ...bookUpdate });
 
@@ -107,6 +109,8 @@ export class BooksService {
           this.genreRepository.create({ name }),
         );
       }
+
+      book.user = user;
 
       await queryRunner.manager.save(book);
       await queryRunner.commitTransaction();
