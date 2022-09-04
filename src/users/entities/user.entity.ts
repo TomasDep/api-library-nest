@@ -4,9 +4,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
+import { Book } from '../../books/entities/book.entity';
 
 @Entity('users')
 export class User {
@@ -24,6 +27,8 @@ export class User {
   fullname: string;
   @Column('text', { array: true, default: ['user'] })
   roles: string[];
+  @OneToMany(() => Book, (book) => book.user)
+  books: Book;
   @CreateDateColumn({
     type: 'timestamp',
     name: 'created_at',
