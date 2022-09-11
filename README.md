@@ -10,6 +10,7 @@
 - postgreSQL - v. 14.3
 - TypeORM
 - Docker
+- Open API documentations
 
 ## Run Database
 
