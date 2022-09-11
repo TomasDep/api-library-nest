@@ -9,7 +9,12 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { Auth } from '../auth/decorators/auth.decorator';
 import { PaginatioDto } from '../common/dtos/pagination.dto';
@@ -32,6 +37,7 @@ export class BooksController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden, token related' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiSecurity('Bearer-auth')
   @Post()
   @Auth(ValidRoles.ADMIN)
   public create(@Body() createBookDto: CreateBookDto, @GetUser() user: User) {
@@ -62,6 +68,7 @@ export class BooksController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden, token related' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiSecurity('Bearer-auth')
   @Patch(':id')
   @Auth(ValidRoles.ADMIN)
   public update(
@@ -77,6 +84,7 @@ export class BooksController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden, token related' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiSecurity('Bearer-auth')
   @Delete(':id')
   @Auth(ValidRoles.ADMIN)
   public remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
